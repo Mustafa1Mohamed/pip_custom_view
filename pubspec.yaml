@@ -1,6 +1,6 @@
 name: pip_custom_view
 description: Widget to allow the presentation of a widget below a floating one.
-version: 0.9.7
+version: 0.9.8
 homepage: https://github.com/mohamedegy107/pip_custom_view
 
 environment:
