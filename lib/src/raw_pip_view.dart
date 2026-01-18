@@ -240,16 +240,7 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
                               Positioned(
                                 top: 6,
                                 right: 6,
-                                child: AnimatedBuilder(
-                                  animation: _rotationAnimation,
-                                  builder: (context, child) {
-                                    return Transform.rotate(
-                                      angle: -_rotationAnimation.value,
-                                      child: child,
-                                    );
-                                  },
-                                  child: widget.closeButton!,
-                                ),
+                                child: widget.closeButton!,
                               ),
                           ],
                         ),
