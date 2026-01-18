@@ -9,7 +9,7 @@ class RawPIPView extends StatefulWidget {
   final Widget? topWidget;
   final Widget? bottomWidget;
   final Widget pipViewWidget;
-  // final Widget? closeButton;
+  final Widget? closeButton;
   final void Function()? onTapTopWidget;
 
   const RawPIPView({
@@ -22,7 +22,7 @@ class RawPIPView extends StatefulWidget {
     this.bottomWidget,
     this.onTapTopWidget,
     required this.pipViewWidget,
-    // this.closeButton,
+    this.closeButton,
   }) : super(key: key);
 
   @override
@@ -235,18 +235,18 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
                             ),
 
                             
-                            // if (_isFloating)
-                            //   Positioned(
-                            //     right: -10,
-                            //     top: -10,
-                            //     child: widget.closeButton ?? Container(),
-                            //   ),
+                            if (_isFloating)
+                              Positioned(
+                                right: -10,
+                                top: -10,
+                                child: widget.closeButton ?? Container(),
+                              ),
 
-                            // if (_isFloating && widget.closeButton != null)
-                            //   Align(
-                            //     alignment: Alignment.bottomCenter,
-                            //     child: widget.closeButton,
-                            //   ),
+                            if (_isFloating && widget.closeButton != null)
+                              Align(
+                                alignment: Alignment.bottomCenter,
+                                child: widget.closeButton,
+                              ),
                           ],
                         ),
                       ),

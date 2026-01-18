@@ -15,8 +15,8 @@ class PIPView extends StatefulWidget {
   final Widget Function(BuildContext context, bool isFloating) builder;
   final GlobalKey<NavigatorState>? parentNavigatorKey;
   final Route<dynamic> Function(RouteSettings) routes;
-  // final Widget? closeButton;
-  // final Alignment closeButtonAlignment;
+  final Widget? closeButton;
+  final Alignment closeButtonAlignment;
 
   const PIPView({
     Key? key,
@@ -28,8 +28,8 @@ class PIPView extends StatefulWidget {
     this.avoidKeyboard = true,
     this.parentNavigatorKey,
     required this.routes,
-    // this.closeButton,
-    // this.closeButtonAlignment = Alignment.topRight,
+    this.closeButton,
+    this.closeButtonAlignment = Alignment.topRight,
   }) : super(key: key);
 
   @override
@@ -90,7 +90,7 @@ class PIPViewState extends State<PIPView>
       child: RawPIPView(
         avoidKeyboard: widget.avoidKeyboard,
         pipViewWidget: widget.pipViewWidget,
-        // closeButton: widget.closeButton, 
+        closeButton: widget.closeButton, 
         bottomWidget: isFloating
             ? Navigator(
                 key: _navigationService.navigatorKey,
