@@ -10,6 +10,7 @@ class RawPIPView extends StatefulWidget {
   final Widget? topWidget;
   final Widget? bottomWidget;
   final Widget pipViewWidget;
+  final Widget? closeButton;
   // this is exposed because trying to watch onTap event
   // by wrapping the top widget with a gesture detector
   // causes the tap to be lost sometimes because it
@@ -26,6 +27,7 @@ class RawPIPView extends StatefulWidget {
     this.bottomWidget,
     this.onTapTopWidget,
     required this.pipViewWidget,
+    this.closeButton,
   }) : super(key: key);
 
   @override
@@ -257,39 +259,52 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
                       onPanCancel: _isFloating ? _onPanCancel : null,
                       onPanEnd: _isFloating ? _onPanEnd : null,
                       onTap: widget.onTapTopWidget,
-                      child: Material(
-                        borderRadius: BorderRadius.circular(borderRadius),
-                        color: Colors.transparent,
-                        child: _isFloating
-                            ? AnimatedBuilder(
-                                animation: _rotationAnimation,
-                                builder: (context, child) {
-                                  return Transform.rotate(
-                                    angle: _rotationAnimation.value,
-                                    child: child,
-                                  );
-                                },
-                                child: widget.pipViewWidget,
-                              )
-                            : Container(
-                                clipBehavior: Clip.antiAlias,
-                                decoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  borderRadius: BorderRadius.circular(
-                                    borderRadius,
+                      child: Stack(
+                        alignment: Alignment
+                            .topRight, // Align closeButton to top-right
+                        children: [
+                          Material(
+                            borderRadius: BorderRadius.circular(borderRadius),
+                            color: Colors.transparent,
+                            child: _isFloating
+                                ? AnimatedBuilder(
+                                    animation: _rotationAnimation,
+                                    builder: (context, child) {
+                                      return Transform.rotate(
+                                        angle: _rotationAnimation.value,
+                                        child: child,
+                                      );
+                                    },
+                                    child: widget.pipViewWidget,
+                                  )
+                                : Container(
+                                    clipBehavior: Clip.antiAlias,
+                                    decoration: BoxDecoration(
+                                      color: Colors.transparent,
+                                      borderRadius: BorderRadius.circular(
+                                        borderRadius,
+                                      ),
+                                    ),
+                                    width: width,
+                                    height: height,
+                                    child: Transform.scale(
+                                      scale: scale,
+                                      child: OverflowBox(
+                                        maxHeight: fullWidgetSize.height,
+                                        maxWidth: fullWidgetSize.width,
+                                        child: child,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                width: width,
-                                height: height,
-                                child: Transform.scale(
-                                  scale: scale,
-                                  child: OverflowBox(
-                                    maxHeight: fullWidgetSize.height,
-                                    maxWidth: fullWidgetSize.width,
-                                    child: child,
-                                  ),
-                                ),
-                              ),
+                          ),
+                          if (widget.closeButton != null)
+                            Positioned(
+                              top:
+                                  8.0, // Adjust the position of the close button
+                              right: 8.0,
+                              child: widget.closeButton!,
+                            ),
+                        ],
                       ),
                     ),
                   );
@@ -337,9 +352,8 @@ PIPViewCorner _calculateNearestCorner({
   required Map<PIPViewCorner, Offset> offsets,
 }) {
   _CornerDistance calculateDistance(PIPViewCorner corner) {
-    final distance = offsets[corner]!
-        .translate(-offset.dx, -offset.dy)
-        .distanceSquared;
+    final distance =
+        offsets[corner]!.translate(-offset.dx, -offset.dy).distanceSquared;
     return _CornerDistance(corner: corner, distance: distance);
   }
 
@@ -359,11 +373,10 @@ Map<PIPViewCorner, Offset> _calculateOffsets({
     final spacing = 16.0;
     final left = spacing + windowPadding.left;
     final top = spacing + windowPadding.top;
-    final right =
-        spaceSize.width -
+    final right = spaceSize.width -
         widgetSize.width -
         windowPadding.right -
-        spacing; // تقليل المسافة على اليمين
+        spacing;
     final bottom =
         spaceSize.height - widgetSize.height - windowPadding.bottom - spacing;
 
