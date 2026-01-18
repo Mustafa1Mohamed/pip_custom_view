@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dismiss_keyboard.dart';
 import 'helpers/pip_controllers.dart';
 import 'helpers/pip_navigation_services.dart';
 import 'raw_pip_view.dart';
@@ -14,10 +15,12 @@ class PIPView extends StatefulWidget {
   final Widget Function(BuildContext context, bool isFloating) builder;
   final GlobalKey<NavigatorState>? parentNavigatorKey;
   final Route<dynamic> Function(RouteSettings) routes;
-  final Widget? stickyButton; // NEW: Changed from closeButton to stickyButton
-  final Alignment stickyButtonAlignment; // NEW: Button alignment
-  final bool freePositioning; // NEW: Enable free positioning
-  final double edgePadding; // NEW: Edge padding
+  final Widget? stickyButton;
+  final Alignment stickyButtonAlignment;
+  final bool freePositioning;
+  final double edgePadding;
+  final Widget? frameWidget; // NEW: Frame widget parameter
+
   const PIPView({
     Key? key,
     required this.builder,
@@ -28,10 +31,11 @@ class PIPView extends StatefulWidget {
     this.avoidKeyboard = true,
     this.parentNavigatorKey,
     required this.routes,
-    this.stickyButton, // NEW
-    this.stickyButtonAlignment = Alignment.topRight, // NEW
-    this.freePositioning = false, // NEW
-    this.edgePadding = 16.0, // NEW
+    this.stickyButton,
+    this.stickyButtonAlignment = Alignment.topRight,
+    this.freePositioning = true,
+    this.edgePadding = 16.0,
+    this.frameWidget, // NEW
   }) : super(key: key);
 
   @override
@@ -92,11 +96,11 @@ class PIPViewState extends State<PIPView>
       child: RawPIPView(
         avoidKeyboard: widget.avoidKeyboard,
         pipViewWidget: widget.pipViewWidget,
-        stickyButton: widget.stickyButton, // NEW: Pass sticky button
-        stickyButtonAlignment:
-            widget.stickyButtonAlignment, // NEW: Pass alignment
-            freePositioning: widget.freePositioning, // NEW
-        edgePadding: widget.edgePadding, // NEW
+        stickyButton: widget.stickyButton,
+        stickyButtonAlignment: widget.stickyButtonAlignment,
+        freePositioning: widget.freePositioning,
+        edgePadding: widget.edgePadding,
+        frameWidget: widget.frameWidget, // NEW: Pass frame widget
         bottomWidget: isFloating
             ? Navigator(
                 key: _navigationService.navigatorKey,
