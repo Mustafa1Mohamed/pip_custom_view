@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'constants.dart';
 
 class RawPIPView extends StatefulWidget {
@@ -9,7 +10,8 @@ class RawPIPView extends StatefulWidget {
   final Widget? topWidget;
   final Widget? bottomWidget;
   final Widget pipViewWidget;
-  final Widget? closeButton;
+  final Widget? stickyButton; // NEW: Sticky button parameter
+  final Alignment stickyButtonAlignment; // NEW: Button alignment on PIP view
   final void Function()? onTapTopWidget;
 
   const RawPIPView({
@@ -22,7 +24,8 @@ class RawPIPView extends StatefulWidget {
     this.bottomWidget,
     this.onTapTopWidget,
     required this.pipViewWidget,
-    this.closeButton,
+    this.stickyButton, // NEW
+    this.stickyButtonAlignment = Alignment.topRight, // NEW: Default position
   }) : super(key: key);
 
   @override
@@ -35,12 +38,10 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
 
   late final AnimationController _toggleFloatingAnimationController;
   late final AnimationController _dragAnimationController;
-
   late PIPViewCorner _corner;
   Offset _dragOffset = Offset.zero;
-  bool _isDragging = false;
-  bool _isFloating = false;
-
+  var _isDragging = false;
+  var _isFloating = false;
   Widget? _bottomWidgetGhost;
   Map<PIPViewCorner, Offset> _offsets = {};
 
@@ -48,18 +49,36 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _corner = widget.initialCorner;
-
     _toggleFloatingAnimationController = AnimationController(
       duration: defaultAnimationDuration,
       vsync: this,
     );
-
     _dragAnimationController = AnimationController(
       duration: defaultAnimationDuration,
       vsync: this,
     );
+    startRotaionAnimation();
+  }
 
-    _startRotationAnimation();
+  @override
+  void didUpdateWidget(covariant RawPIPView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_isFloating) {
+      if (widget.topWidget == null || widget.bottomWidget == null) {
+        _isFloating = false;
+        _bottomWidgetGhost = oldWidget.bottomWidget;
+        _toggleFloatingAnimationController.reverse().whenCompleteOrCancel(() {
+          if (mounted) {
+            setState(() => _bottomWidgetGhost = null);
+          }
+        });
+      }
+    } else {
+      if (widget.topWidget != null && widget.bottomWidget != null) {
+        _isFloating = true;
+        _toggleFloatingAnimationController.forward();
+      }
+    }
   }
 
   @override
@@ -70,16 +89,13 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  void _startRotationAnimation() {
+  void startRotaionAnimation() {
     _rotationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 35),
+      duration: Duration(seconds: 35),
     )..repeat();
 
-    _rotationAnimation = Tween<double>(
-      begin: 0,
-      end: 2 * 3.1415926535,
-    ).animate(
+    _rotationAnimation = Tween<double>(begin: 0, end: 2 * 3.1416).animate(
       CurvedAnimation(
         parent: _rotationController,
         curve: Curves.linear,
@@ -99,30 +115,27 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
     );
   }
 
-  bool _isAnimating() =>
-      _toggleFloatingAnimationController.isAnimating ||
-      _dragAnimationController.isAnimating;
-
-  void _onPanStart(DragStartDetails details) {
-    if (_isAnimating()) return;
-    setState(() {
-      _dragOffset = _offsets[_corner]!;
-      _isDragging = true;
-    });
+  bool _isAnimating() {
+    return _toggleFloatingAnimationController.isAnimating ||
+        _dragAnimationController.isAnimating;
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
     if (!_isDragging) return;
     setState(() {
-      _dragOffset += details.delta;
+      _dragOffset = _dragOffset.translate(
+        details.delta.dx,
+        details.delta.dy,
+      );
     });
   }
 
   void _onPanCancel() {
     if (!_isDragging) return;
     setState(() {
-      _isDragging = false;
+      _dragAnimationController.value = 0;
       _dragOffset = Offset.zero;
+      _isDragging = false;
     });
   }
 
@@ -133,22 +146,28 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
       offset: _dragOffset,
       offsets: _offsets,
     );
-
     setState(() {
       _corner = nearestCorner;
       _isDragging = false;
     });
-
-    _dragAnimationController.forward().whenComplete(() {
+    _dragAnimationController.forward().whenCompleteOrCancel(() {
       _dragAnimationController.value = 0;
       _dragOffset = Offset.zero;
+    });
+  }
+
+  void _onPanStart(DragStartDetails details) {
+    if (_isAnimating()) return;
+    setState(() {
+      _dragOffset = _offsets[_corner]!;
+      _isDragging = true;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
-    EdgeInsets windowPadding = mediaQuery.padding;
+    var windowPadding = mediaQuery.padding;
     if (widget.avoidKeyboard) {
       windowPadding += mediaQuery.viewInsets;
     }
@@ -156,27 +175,38 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
     return LayoutBuilder(
       builder: (context, constraints) {
         final bottomWidget = widget.bottomWidget ?? _bottomWidgetGhost;
+        final width = constraints.maxWidth;
+        final height = constraints.maxHeight;
+        double? floatingWidth = widget.floatingWidth;
+        double? floatingHeight = widget.floatingHeight;
+        if (floatingWidth == null && floatingHeight != null) {
+          floatingWidth = width / height * floatingHeight;
+        }
+        floatingWidth ??= 100.0;
+        if (floatingHeight == null) {
+          floatingHeight = height / width * floatingWidth;
+        }
 
-        final fullSize = Size(
-          constraints.maxWidth,
-          constraints.maxHeight,
-        );
-
-        double floatingWidth = widget.floatingWidth ?? 100;
-        double floatingHeight = widget.floatingHeight ?? floatingWidth;
-
-        final floatingSize = Size(floatingWidth, floatingHeight);
+        final floatingWidgetSize = Size(floatingWidth, floatingHeight);
+        final fullWidgetSize = Size(width, height);
 
         _updateCornersOffsets(
-          spaceSize: fullSize,
-          widgetSize: floatingSize,
+          spaceSize: fullWidgetSize,
+          widgetSize: floatingWidgetSize,
           windowPadding: windowPadding,
         );
 
-        final calculatedOffset = _offsets[_corner]!;
+        final calculatedOffset = _offsets[_corner];
+
+        // BoxFit.cover
+        final widthRatio = floatingWidth / width;
+        final heightRatio = floatingHeight / height;
+        final scaledDownScale = widthRatio > heightRatio
+            ? floatingWidgetSize.width / fullWidgetSize.width
+            : floatingWidgetSize.height / fullWidgetSize.height;
 
         return Stack(
-          children: [
+          children: <Widget>[
             if (bottomWidget != null) bottomWidget,
             if (widget.topWidget != null)
               AnimatedBuilder(
@@ -185,67 +215,97 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
                   _dragAnimationController,
                 ]),
                 builder: (context, child) {
-                  final curve = Curves.easeInOutQuad;
-
-                  final toggleValue = curve.transform(
+                  final animationCurve = CurveTween(
+                    curve: Curves.easeInOutQuad,
+                  );
+                  final dragAnimationValue = animationCurve.transform(
+                    _dragAnimationController.value,
+                  );
+                  final toggleFloatingAnimationValue = animationCurve.transform(
                     _toggleFloatingAnimationController.value,
                   );
 
-                  final dragValue = curve.transform(
-                    _dragAnimationController.value,
-                  );
-
-                  final offset = _isDragging
+                  final floatingOffset = _isDragging
                       ? _dragOffset
                       : Tween<Offset>(
                           begin: _dragOffset,
                           end: calculatedOffset,
-                        ).transform(
-                          _dragAnimationController.isAnimating
-                              ? dragValue
-                              : toggleValue,
-                        );
+                        ).transform(_dragAnimationController.isAnimating
+                          ? dragAnimationValue
+                          : toggleFloatingAnimationValue);
+                  final borderRadius = Tween<double>(
+                    begin: 0,
+                    end: 10,
+                  ).transform(toggleFloatingAnimationValue);
+                  final currentWidth = Tween<double>(
+                    begin: fullWidgetSize.width,
+                    end: floatingWidgetSize.width,
+                  ).transform(toggleFloatingAnimationValue);
+                  final currentHeight = Tween<double>(
+                    begin: fullWidgetSize.height,
+                    end: floatingWidgetSize.height,
+                  ).transform(toggleFloatingAnimationValue);
+                  final scale = Tween<double>(
+                    begin: 1,
+                    end: scaledDownScale,
+                  ).transform(toggleFloatingAnimationValue);
 
-                  // Inside RawPIPView build method...
                   return Positioned(
-                    left: offset.dx,
-                    top: offset.dy,
+                    left: floatingOffset.dx,
+                    top: floatingOffset.dy,
                     child: GestureDetector(
                       onPanStart: _isFloating ? _onPanStart : null,
-                      // ... other pan handlers
+                      onPanUpdate: _isFloating ? _onPanUpdate : null,
+                      onPanCancel: _isFloating ? _onPanCancel : null,
+                      onPanEnd: _isFloating ? _onPanEnd : null,
+                      onTap: widget.onTapTopWidget,
                       child: SizedBox(
-                        width: floatingSize.width,
-                        height: floatingSize.height,
+                        width: currentWidth,
+                        height: currentHeight,
                         child: Stack(
-                          clipBehavior: Clip
-                              .none, // Allows button to sit slightly outside if needed
                           children: [
-                            // 1. THE ROTATING CONTENT
+                            // The rotating PIP view content
                             Positioned.fill(
-                              child: AnimatedBuilder(
-                                animation: _rotationAnimation,
-                                builder: (context, child) {
-                                  return Transform.rotate(
-                                    angle: _rotationAnimation.value,
-                                    child: child,
-                                  );
-                                },
-                                child: widget.pipViewWidget,
+                              child: Material(
+                                borderRadius:
+                                    BorderRadius.circular(borderRadius),
+                                color: Colors.transparent,
+                                child: _isFloating
+                                    ? AnimatedBuilder(
+                                        animation: _rotationAnimation,
+                                        builder: (context, child) {
+                                          return Transform.rotate(
+                                            angle: _rotationAnimation.value,
+                                            child: child,
+                                          );
+                                        },
+                                        child: widget.pipViewWidget,
+                                      )
+                                    : Container(
+                                        clipBehavior: Clip.antiAlias,
+                                        decoration: BoxDecoration(
+                                          color: Colors.transparent,
+                                          borderRadius: BorderRadius.circular(
+                                              borderRadius),
+                                        ),
+                                        width: currentWidth,
+                                        height: currentHeight,
+                                        child: Transform.scale(
+                                          scale: scale,
+                                          child: OverflowBox(
+                                            maxHeight: fullWidgetSize.height,
+                                            maxWidth: fullWidgetSize.width,
+                                            child: child,
+                                          ),
+                                        ),
+                                      ),
                               ),
                             ),
-
-                            
-                            if (_isFloating)
-                              Positioned(
-                                right: -10,
-                                top: -10,
-                                child: widget.closeButton ?? Container(),
-                              ),
-
-                            if (_isFloating && widget.closeButton != null)
+                            // The sticky button that doesn't rotate
+                            if (_isFloating && widget.stickyButton != null)
                               Align(
-                                alignment: Alignment.bottomCenter,
-                                child: widget.closeButton,
+                                alignment: widget.stickyButtonAlignment,
+                                child: widget.stickyButton!,
                               ),
                           ],
                         ),
@@ -253,7 +313,18 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
                     ),
                   );
                 },
-                child: widget.topWidget,
+                child: _isFloating
+                    ? AnimatedBuilder(
+                        animation: _rotationAnimation,
+                        builder: (context, child) {
+                          return Transform.rotate(
+                            angle: _rotationAnimation.value,
+                            child: child,
+                          );
+                        },
+                        child: widget.pipViewWidget,
+                      )
+                    : widget.topWidget,
               ),
           ],
         );
@@ -261,10 +332,6 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
     );
   }
 }
-
-/* -------------------------------------------------------------------------- */
-/*                                  HELPERS                                   */
-/* -------------------------------------------------------------------------- */
 
 enum PIPViewCorner {
   topLeft,
@@ -280,23 +347,32 @@ enum PIPViewCorner {
 class _CornerDistance {
   final PIPViewCorner corner;
   final double distance;
-  _CornerDistance({required this.corner, required this.distance});
+
+  _CornerDistance({
+    required this.corner,
+    required this.distance,
+  });
 }
 
 PIPViewCorner _calculateNearestCorner({
   required Offset offset,
   required Map<PIPViewCorner, Offset> offsets,
 }) {
-  final distances = offsets.entries
-      .map(
-        (e) => _CornerDistance(
-          corner: e.key,
-          distance: (e.value - offset).distanceSquared,
-        ),
-      )
-      .toList();
+  _CornerDistance calculateDistance(PIPViewCorner corner) {
+    final distance = offsets[corner]!
+        .translate(
+          -offset.dx,
+          -offset.dy,
+        )
+        .distanceSquared;
+    return _CornerDistance(
+      corner: corner,
+      distance: distance,
+    );
+  }
 
-  distances.sort((a, b) => a.distance.compareTo(b.distance));
+  final distances = PIPViewCorner.values.map(calculateDistance).toList();
+  distances.sort((cd0, cd1) => cd0.distance.compareTo(cd1.distance));
   return distances.first.corner;
 }
 
@@ -305,25 +381,42 @@ Map<PIPViewCorner, Offset> _calculateOffsets({
   required Size widgetSize,
   required EdgeInsets windowPadding,
 }) {
-  const spacing = 16.0;
+  Offset getOffsetForCorner(PIPViewCorner corner) {
+    final spacing = 16.0;
+    final left = spacing + windowPadding.left;
+    final top = spacing + windowPadding.top;
+    final right =
+        spaceSize.width - widgetSize.width - windowPadding.right - spacing;
+    final bottom =
+        spaceSize.height - widgetSize.height - windowPadding.bottom - spacing;
 
-  final left = spacing + windowPadding.left;
-  final top = spacing + windowPadding.top;
-  final right = spaceSize.width - widgetSize.width - spacing;
-  final bottom = spaceSize.height - widgetSize.height - spacing;
+    switch (corner) {
+      case PIPViewCorner.topLeft:
+        return Offset(left, top);
+      case PIPViewCorner.topRight:
+        return Offset(right, top);
+      case PIPViewCorner.bottomLeft:
+        return Offset(left, bottom);
+      case PIPViewCorner.bottomRight:
+        return Offset(right, bottom);
+      case PIPViewCorner.topCenter:
+        return Offset((spaceSize.width - widgetSize.width) / 2, top);
+      case PIPViewCorner.bottomCenter:
+        return Offset((spaceSize.width - widgetSize.width) / 2, bottom);
+      case PIPViewCorner.leftCenter:
+        return Offset(left, (spaceSize.height - widgetSize.height) / 2);
+      case PIPViewCorner.rightCenter:
+        return Offset(right, (spaceSize.height - widgetSize.height) / 2);
+      default:
+        throw UnimplementedError();
+    }
+  }
 
-  return {
-    PIPViewCorner.topLeft: Offset(left, top),
-    PIPViewCorner.topRight: Offset(right, top),
-    PIPViewCorner.bottomLeft: Offset(left, bottom),
-    PIPViewCorner.bottomRight: Offset(right, bottom),
-    PIPViewCorner.topCenter:
-        Offset((spaceSize.width - widgetSize.width) / 2, top),
-    PIPViewCorner.bottomCenter:
-        Offset((spaceSize.width - widgetSize.width) / 2, bottom),
-    PIPViewCorner.leftCenter:
-        Offset(left, (spaceSize.height - widgetSize.height) / 2),
-    PIPViewCorner.rightCenter:
-        Offset(right, (spaceSize.height - widgetSize.height) / 2),
-  };
+  final corners = PIPViewCorner.values;
+  final Map<PIPViewCorner, Offset> offsets = {};
+  for (final corner in corners) {
+    offsets[corner] = getOffsetForCorner(corner);
+  }
+
+  return offsets;
 }

@@ -1,5 +1,5 @@
-// ============================================================================
 import 'package:flutter/material.dart';
+import 'dismiss_keyboard.dart';
 import 'helpers/pip_controllers.dart';
 import 'helpers/pip_navigation_services.dart';
 import 'raw_pip_view.dart';
@@ -15,8 +15,8 @@ class PIPView extends StatefulWidget {
   final Widget Function(BuildContext context, bool isFloating) builder;
   final GlobalKey<NavigatorState>? parentNavigatorKey;
   final Route<dynamic> Function(RouteSettings) routes;
-  final Widget? closeButton;
-  final Alignment closeButtonAlignment;
+  final Widget? stickyButton; // NEW: Changed from closeButton to stickyButton
+  final Alignment stickyButtonAlignment; // NEW: Button alignment
 
   const PIPView({
     Key? key,
@@ -28,8 +28,8 @@ class PIPView extends StatefulWidget {
     this.avoidKeyboard = true,
     this.parentNavigatorKey,
     required this.routes,
-    this.closeButton,
-    this.closeButtonAlignment = Alignment.topRight,
+    this.stickyButton, // NEW
+    this.stickyButtonAlignment = Alignment.topRight, // NEW
   }) : super(key: key);
 
   @override
@@ -90,7 +90,9 @@ class PIPViewState extends State<PIPView>
       child: RawPIPView(
         avoidKeyboard: widget.avoidKeyboard,
         pipViewWidget: widget.pipViewWidget,
-        closeButton: widget.closeButton, 
+        stickyButton: widget.stickyButton, // NEW: Pass sticky button
+        stickyButtonAlignment:
+            widget.stickyButtonAlignment, // NEW: Pass alignment
         bottomWidget: isFloating
             ? Navigator(
                 key: _navigationService.navigatorKey,
