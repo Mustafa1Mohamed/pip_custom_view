@@ -236,7 +236,7 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
                             ),
 
                             // ✅ Close button stays fixed (doesn't rotate, but moves with PIP)
-                            if (widget.closeButton != null)
+                            if (widget.closeButton != null && _isFloating)
                               Positioned(
                                 right: 0,
                                 top: 0,
