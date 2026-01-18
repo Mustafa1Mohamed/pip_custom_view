@@ -107,7 +107,7 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
   void startRotaionAnimation() {
     _rotationController = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 10),
+      duration: Duration(seconds: 5),
     )..repeat();
 
     _rotationAnimation = Tween<double>(begin: 0, end: 2 * 3.1416).animate(
