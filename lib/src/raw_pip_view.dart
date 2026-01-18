@@ -235,12 +235,12 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
                             ),
 
                             
-                            if (_isFloating)
-                              Positioned(
-                                right: -10,
-                                top: -10,
-                                child: widget.closeButton ?? Container(),
-                              ),
+                            // if (_isFloating)
+                            //   Positioned(
+                            //     right: -10,
+                            //     top: -10,
+                            //     child: widget.closeButton ?? Container(),
+                            //   ),
 
                             // if (_isFloating && widget.closeButton != null)
                             //   Align(
