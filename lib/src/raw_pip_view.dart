@@ -234,21 +234,19 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
                               ),
                             ),
 
-                            // 2. THE STICKY BUTTON (NON-ROTATING)
-                            // This stays "upright" because it's outside Transform.rotate
+                            
                             if (_isFloating)
                               Positioned(
-                                right: -10, // Adjust position as needed
+                                right: -10,
                                 top: -10,
                                 child: widget.closeButton ?? Container(),
                               ),
 
-                            // Add your custom control button here too
-                            if (_isFloating && widget.closeButton != null)
-                              Align(
-                                alignment: Alignment.bottomCenter,
-                                child: widget.closeButton,
-                              ),
+                            // if (_isFloating && widget.closeButton != null)
+                            //   Align(
+                            //     alignment: Alignment.bottomCenter,
+                            //     child: widget.closeButton,
+                            //   ),
                           ],
                         ),
                       ),
