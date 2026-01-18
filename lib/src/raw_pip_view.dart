@@ -9,7 +9,7 @@ class RawPIPView extends StatefulWidget {
   final Widget? topWidget;
   final Widget? bottomWidget;
   final Widget pipViewWidget;
-  final Widget? closeButton;
+  // final Widget? closeButton;
   final void Function()? onTapTopWidget;
 
   const RawPIPView({
@@ -22,7 +22,7 @@ class RawPIPView extends StatefulWidget {
     this.bottomWidget,
     this.onTapTopWidget,
     required this.pipViewWidget,
-    this.closeButton,
+    // this.closeButton,
   }) : super(key: key);
 
   @override
