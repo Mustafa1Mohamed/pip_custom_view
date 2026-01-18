@@ -223,27 +223,29 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
                           children: [
                             // ✅ Rotating PIP
                             Positioned.fill(
-                              child: AnimatedBuilder(
-                                animation: _rotationAnimation,
-                                builder: (context, child) {
-                                  return Transform.rotate(
-                                    angle: _rotationAnimation.value,
-                                    child: child,
-                                  );
-                                },
-                                child: widget.pipViewWidget,
+                              child: Stack(
+                                children: [
+                                  AnimatedBuilder(
+                                    animation: _rotationAnimation,
+                                    builder: (context, child) {
+                                      return Transform.rotate(
+                                        angle: _rotationAnimation.value,
+                                        child: child,
+                                      );
+                                    },
+                                    child: widget.pipViewWidget,
+                                  ),
+                                  if (widget.closeButton != null)
+                                    Positioned(
+                                      right: 0,
+                                      top: 0,
+                                      child: widget.closeButton!,
+                                    ),
+                                ],
                               ),
                             ),
 
-                            // ✅ Fixed close button positioned on top of the PIP
-                            if (widget.closeButton != null)
-                              Align(
-                                alignment: Alignment.topRight,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(6.0),
-                                  child: widget.closeButton!,
-                                ),
-                              ),
+                            
                           ],
                         ),
                       ),
