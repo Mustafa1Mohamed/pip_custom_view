@@ -1,13 +1,10 @@
-// widgets/pip_view.dart
+// ============================================================================
 import 'package:flutter/material.dart';
-// import '../models/pip_state.dart';
-// import '../navigation/pip_navigation_handler.dart';
 import 'dismiss_keyboard.dart';
 import 'helpers/pip_controllers.dart';
 import 'helpers/pip_navigation_services.dart';
 import 'raw_pip_view.dart';
 
-// models/pip_state.dart
 enum PipViewState { expanded, floating }
 
 class PIPView extends StatefulWidget {
@@ -19,8 +16,8 @@ class PIPView extends StatefulWidget {
   final Widget Function(BuildContext context, bool isFloating) builder;
   final GlobalKey<NavigatorState>? parentNavigatorKey;
   final Route<dynamic> Function(RouteSettings) routes;
-  final Widget? closeButton; // New parameter for the close button
-  final Alignment closeButtonAlignment; // New parameter for button position
+  final Widget? closeButton;
+  final Alignment closeButtonAlignment;
 
   const PIPView({
     Key? key,
@@ -33,7 +30,7 @@ class PIPView extends StatefulWidget {
     this.parentNavigatorKey,
     required this.routes,
     this.closeButton,
-    this.closeButtonAlignment = Alignment.topRight, // Default position
+    this.closeButtonAlignment = Alignment.topRight,
   }) : super(key: key);
 
   @override
@@ -52,7 +49,7 @@ class PIPViewState extends State<PIPView>
   bool _isPIPActive = false;
 
   @override
-  bool get wantKeepAlive => true; // 👈 KEEP ALIVE
+  bool get wantKeepAlive => true;
 
   @override
   void presentBelow(Widget widget) {
@@ -85,49 +82,40 @@ class PIPViewState extends State<PIPView>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // 👈 REQUIRED
+    super.build(context);
 
     final isFloating = _bottomWidget != null;
 
     return WillPopScope(
       onWillPop: _onWillPop,
-      child: Stack(
-        children: [
-          RawPIPView(
-            avoidKeyboard: widget.avoidKeyboard,
-            pipViewWidget: widget.pipViewWidget,
-            closeButton: widget.closeButton, // ✅ MOVE IT HERE
-            bottomWidget: isFloating
-                ? Navigator(
-                    key: _navigationService.navigatorKey,
-                    onGenerateRoute: (settings) {
-                      if (settings.name == '/') {
-                        return MaterialPageRoute(
-                          builder: (context) => _bottomWidget!,
-                        );
-                      } else {
-                        return widget.routes(settings);
-                      }
-                    },
-                  )
-                : null,
-            onTapTopWidget: isFloating ? stopFloating : null,
-            topWidget: Builder(
-              builder: (context) => AbsorbPointer(
-                absorbing: isFloating,
-                child: widget.builder(context, isFloating),
-              ),
-            ),
-            floatingHeight: widget.floatingHeight,
-            floatingWidth: widget.floatingWidth,
-            initialCorner: widget.initialCorner,
+      child: RawPIPView(
+        avoidKeyboard: widget.avoidKeyboard,
+        pipViewWidget: widget.pipViewWidget,
+        closeButton: widget.closeButton, // ✅ Pass to RawPIPView
+        bottomWidget: isFloating
+            ? Navigator(
+                key: _navigationService.navigatorKey,
+                onGenerateRoute: (settings) {
+                  if (settings.name == '/') {
+                    return MaterialPageRoute(
+                      builder: (context) => _bottomWidget!,
+                    );
+                  } else {
+                    return widget.routes(settings);
+                  }
+                },
+              )
+            : null,
+        onTapTopWidget: isFloating ? stopFloating : null,
+        topWidget: Builder(
+          builder: (context) => AbsorbPointer(
+            absorbing: isFloating,
+            child: widget.builder(context, isFloating),
           ),
-          if (widget.closeButton != null)
-            Align(
-              alignment: widget.closeButtonAlignment,
-              child: widget.closeButton!,
-            ),
-        ],
+        ),
+        floatingHeight: widget.floatingHeight,
+        floatingWidth: widget.floatingWidth,
+        initialCorner: widget.initialCorner,
       ),
     );
   }
