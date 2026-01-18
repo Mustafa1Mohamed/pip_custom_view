@@ -10,9 +10,9 @@ class RawPIPView extends StatefulWidget {
   final Widget? topWidget;
   final Widget? bottomWidget;
   final Widget pipViewWidget;
-  final Widget? stickyButton; // NEW: Sticky button parameter
-  final Alignment stickyButtonAlignment; // NEW: Button alignment on PIP view
-  final bool freePositioning; // NEW: Enable free positioning anywhere on screen
+  final Widget? stickyButton;
+  final Alignment stickyButtonAlignment;
+  final bool freePositioning;
   final double edgePadding;
   final void Function()? onTapTopWidget;
 
@@ -26,9 +26,9 @@ class RawPIPView extends StatefulWidget {
     this.bottomWidget,
     this.onTapTopWidget,
     required this.pipViewWidget,
-    this.stickyButton, // NEW
-    this.stickyButtonAlignment = Alignment.topRight, // NEW: Default position
-    this.freePositioning = true, // NEW: Default to free positioning
+    this.stickyButton,
+    this.stickyButtonAlignment = Alignment.topRight,
+    this.freePositioning = true,
     this.edgePadding = 16.0,
   }) : super(key: key);
 
@@ -53,6 +53,7 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
   Size _screenSize = Size.zero;
   Size _widgetSize = Size.zero;
   EdgeInsets _windowPadding = EdgeInsets.zero;
+
   @override
   void initState() {
     super.initState();
@@ -119,11 +120,18 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
     required Size widgetSize,
     required EdgeInsets windowPadding,
   }) {
+    // FIX: Assign these values so _clampToScreenBounds works correctly
+    _screenSize = spaceSize;
+    _widgetSize = widgetSize;
+    _windowPadding = windowPadding;
+
     _offsets = _calculateOffsets(
       spaceSize: spaceSize,
       widgetSize: widgetSize,
       windowPadding: windowPadding,
     );
+
+    // Initialize current position if not set
     if (_currentPosition == Offset.zero && _offsets.isNotEmpty) {
       _currentPosition = _offsets[_corner] ?? Offset.zero;
     }
@@ -134,9 +142,13 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
         _dragAnimationController.isAnimating;
   }
 
-
-  // NEW: Clamp position to screen boundaries
+  // Clamp position to screen boundaries
   Offset _clampToScreenBounds(Offset position) {
+    // Safety check - if sizes aren't set yet, return position unchanged
+    if (_screenSize == Size.zero || _widgetSize == Size.zero) {
+      return position;
+    }
+
     final minX = widget.edgePadding + _windowPadding.left;
     final minY = widget.edgePadding + _windowPadding.top;
     final maxX = _screenSize.width -
@@ -148,16 +160,18 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
         widget.edgePadding -
         _windowPadding.bottom;
 
-    return Offset(
-      position.dx.clamp(minX, maxX),
-      position.dy.clamp(minY, maxY),
-    );
+    // Ensure max is not less than min (edge case for very small screens)
+    final clampedX = position.dx.clamp(minX, maxX > minX ? maxX : minX);
+    final clampedY = position.dy.clamp(minY, maxY > minY ? maxY : minY);
+
+    return Offset(clampedX, clampedY);
   }
+
   void _onPanUpdate(DragUpdateDetails details) {
     if (!_isDragging) return;
     setState(() {
       if (widget.freePositioning) {
-        // NEW: Free positioning - update current position directly
+        // Free positioning - update current position directly
         _currentPosition = _clampToScreenBounds(
           _currentPosition.translate(details.delta.dx, details.delta.dy),
         );
@@ -186,7 +200,7 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
     if (!_isDragging) return;
 
     if (widget.freePositioning) {
-      // NEW: Free positioning - just stop dragging, position is already set
+      // Free positioning - just stop dragging, position is already set
       setState(() {
         _isDragging = false;
       });
@@ -243,6 +257,7 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
         final floatingWidgetSize = Size(floatingWidth, floatingHeight);
         final fullWidgetSize = Size(width, height);
 
+        // This now properly updates _screenSize, _widgetSize, and _windowPadding
         _updateCornersOffsets(
           spaceSize: fullWidgetSize,
           widgetSize: floatingWidgetSize,
@@ -278,7 +293,7 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
                     _toggleFloatingAnimationController.value,
                   );
 
-                   // NEW: Calculate floating offset based on positioning mode
+                  // Calculate floating offset based on positioning mode
                   Offset floatingOffset;
 
                   if (widget.freePositioning) {
@@ -304,15 +319,6 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
                             : toggleFloatingAnimationValue);
                   }
 
-
-                  // final floatingOffset = _isDragging
-                  //     ? _dragOffset
-                  //     : Tween<Offset>(
-                  //         begin: _dragOffset,
-                  //         end: calculatedOffset,
-                  //       ).transform(_dragAnimationController.isAnimating
-                  //         ? dragAnimationValue
-                  //         : toggleFloatingAnimationValue);
                   final borderRadius = Tween<double>(
                     begin: 0,
                     end: 10,
