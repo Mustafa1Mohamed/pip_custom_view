@@ -22,7 +22,7 @@ class PIPView extends StatefulWidget {
     Key? key,
     required this.builder,
     required this.pipViewWidget,
-    this.initialCorner = PIPViewCorner.topRight,
+    this.initialCorner = PIPViewCorner.rightTop,
     this.floatingWidth,
     this.floatingHeight,
     this.avoidKeyboard = true,
