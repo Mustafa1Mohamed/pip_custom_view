@@ -19,6 +19,8 @@ class PIPView extends StatefulWidget {
   final Widget Function(BuildContext context, bool isFloating) builder;
   final GlobalKey<NavigatorState>? parentNavigatorKey;
   final Route<dynamic> Function(RouteSettings) routes;
+  final Widget? closeButton; // New parameter for the close button
+  final Alignment closeButtonAlignment; // New parameter for button position
 
   const PIPView({
     Key? key,
@@ -30,6 +32,8 @@ class PIPView extends StatefulWidget {
     this.avoidKeyboard = true,
     this.parentNavigatorKey,
     required this.routes,
+    this.closeButton,
+    this.closeButtonAlignment = Alignment.topRight, // Default position
   }) : super(key: key);
 
   @override
@@ -43,7 +47,6 @@ class PIPView extends StatefulWidget {
 class PIPViewState extends State<PIPView>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin
     implements PIPController {
-
   final PIPNavigationService _navigationService = PIPNavigationService();
   Widget? _bottomWidget;
   bool _isPIPActive = false;
@@ -88,33 +91,42 @@ class PIPViewState extends State<PIPView>
 
     return WillPopScope(
       onWillPop: _onWillPop,
-      child: RawPIPView(
-        avoidKeyboard: widget.avoidKeyboard,
-        pipViewWidget: widget.pipViewWidget,
-        bottomWidget: isFloating
-            ? Navigator(
-                key: _navigationService.navigatorKey,
-                onGenerateRoute: (settings) {
-                  if (settings.name == '/') {
-                    return MaterialPageRoute(
-                      builder: (context) => _bottomWidget!,
-                    );
-                  } else {
-                    return widget.routes(settings);
-                  }
-                },
-              )
-            : null,
-        onTapTopWidget: isFloating ? stopFloating : null,
-        topWidget: Builder(
-          builder: (context) => AbsorbPointer(
-            absorbing: isFloating,
-            child: widget.builder(context, isFloating),
+      child: Stack(
+        children: [
+          RawPIPView(
+            avoidKeyboard: widget.avoidKeyboard,
+            pipViewWidget: widget.pipViewWidget,
+            bottomWidget: isFloating
+                ? Navigator(
+                    key: _navigationService.navigatorKey,
+                    onGenerateRoute: (settings) {
+                      if (settings.name == '/') {
+                        return MaterialPageRoute(
+                          builder: (context) => _bottomWidget!,
+                        );
+                      } else {
+                        return widget.routes(settings);
+                      }
+                    },
+                  )
+                : null,
+            onTapTopWidget: isFloating ? stopFloating : null,
+            topWidget: Builder(
+              builder: (context) => AbsorbPointer(
+                absorbing: isFloating,
+                child: widget.builder(context, isFloating),
+              ),
+            ),
+            floatingHeight: widget.floatingHeight,
+            floatingWidth: widget.floatingWidth,
+            initialCorner: widget.initialCorner,
           ),
-        ),
-        floatingHeight: widget.floatingHeight,
-        floatingWidth: widget.floatingWidth,
-        initialCorner: widget.initialCorner,
+          if (widget.closeButton != null)
+            Align(
+              alignment: widget.closeButtonAlignment,
+              child: widget.closeButton!,
+            ),
+        ],
       ),
     );
   }

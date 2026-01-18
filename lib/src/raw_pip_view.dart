@@ -123,10 +123,7 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
   void _onPanUpdate(DragUpdateDetails details) {
     if (!_isDragging) return;
     setState(() {
-      _dragOffset = _dragOffset.translate(
-        details.delta.dx,
-        details.delta.dy,
-      );
+      _dragOffset = _dragOffset.translate(details.delta.dx, details.delta.dy);
     });
   }
 
@@ -230,9 +227,11 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
                       : Tween<Offset>(
                           begin: _dragOffset,
                           end: calculatedOffset,
-                        ).transform(_dragAnimationController.isAnimating
-                          ? dragAnimationValue
-                          : toggleFloatingAnimationValue);
+                        ).transform(
+                          _dragAnimationController.isAnimating
+                              ? dragAnimationValue
+                              : toggleFloatingAnimationValue,
+                        );
                   final borderRadius = Tween<double>(
                     begin: 0,
                     end: 10,
@@ -276,8 +275,9 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
                                 clipBehavior: Clip.antiAlias,
                                 decoration: BoxDecoration(
                                   color: Colors.transparent,
-                                  borderRadius:
-                                      BorderRadius.circular(borderRadius),
+                                  borderRadius: BorderRadius.circular(
+                                    borderRadius,
+                                  ),
                                 ),
                                 width: width,
                                 height: height,
@@ -329,10 +329,7 @@ class _CornerDistance {
   final PIPViewCorner corner;
   final double distance;
 
-  _CornerDistance({
-    required this.corner,
-    required this.distance,
-  });
+  _CornerDistance({required this.corner, required this.distance});
 }
 
 PIPViewCorner _calculateNearestCorner({
@@ -341,15 +338,9 @@ PIPViewCorner _calculateNearestCorner({
 }) {
   _CornerDistance calculateDistance(PIPViewCorner corner) {
     final distance = offsets[corner]!
-        .translate(
-          -offset.dx,
-          -offset.dy,
-        )
+        .translate(-offset.dx, -offset.dy)
         .distanceSquared;
-    return _CornerDistance(
-      corner: corner,
-      distance: distance,
-    );
+    return _CornerDistance(corner: corner, distance: distance);
   }
 
   final distances = PIPViewCorner.values.map(calculateDistance).toList();
@@ -368,7 +359,8 @@ Map<PIPViewCorner, Offset> _calculateOffsets({
     final spacing = 16.0;
     final left = spacing + windowPadding.left;
     final top = spacing + windowPadding.top;
-    final right = spaceSize.width -
+    final right =
+        spaceSize.width -
         widgetSize.width -
         windowPadding.right -
         spacing; // تقليل المسافة على اليمين
