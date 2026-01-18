@@ -96,6 +96,7 @@ class PIPViewState extends State<PIPView>
           RawPIPView(
             avoidKeyboard: widget.avoidKeyboard,
             pipViewWidget: widget.pipViewWidget,
+            closeButton: widget.closeButton, // ✅ MOVE IT HERE
             bottomWidget: isFloating
                 ? Navigator(
                     key: _navigationService.navigatorKey,

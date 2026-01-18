@@ -235,12 +235,21 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
                               ),
                             ),
 
-                            // ✅ Fixed (non‑rotating) close button
                             if (widget.closeButton != null)
                               Positioned(
                                 top: 6,
                                 right: 6,
-                                child: widget.closeButton!,
+                                child: AnimatedBuilder(
+                                  animation: _rotationAnimation,
+                                  builder: (context, child) {
+                                    return Transform.rotate(
+                                      angle: -_rotationAnimation
+                                          .value, // 🔥 cancel rotation
+                                      child: child,
+                                    );
+                                  },
+                                  child: widget.closeButton!,
+                                ),
                               ),
                           ],
                         ),
