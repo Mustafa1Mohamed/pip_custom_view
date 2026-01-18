@@ -232,7 +232,7 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
                                         angle: _rotationAnimation.value,
                                         child: child,
                                       ),
-                                       if (widget.closeButton != null)
+                                       if (widget.closeButton != null && _isFloating)
                                         Positioned(
                                           right: 0,
                                           top: 0,
