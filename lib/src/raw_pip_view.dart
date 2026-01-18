@@ -207,46 +207,45 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
                         );
 
                   return Positioned(
-                    left: offset.dx,
-                    top: offset.dy,
-                    child: GestureDetector(
-                      onPanStart: _isFloating ? _onPanStart : null,
-                      onPanUpdate: _isFloating ? _onPanUpdate : null,
-                      onPanCancel: _isFloating ? _onPanCancel : null,
-                      onPanEnd: _isFloating ? _onPanEnd : null,
-                      onTap: widget.onTapTopWidget,
-                      child: SizedBox(
-                        width: floatingSize.width,
-                        height: floatingSize.height,
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            // ✅ Rotating PIP (only the pipViewWidget rotates)
-                            Positioned.fill(
-                              child: AnimatedBuilder(
-                                animation: _rotationAnimation,
-                                builder: (context, child) {
-                                  return Transform.rotate(
-                                    angle: _rotationAnimation.value,
-                                    child: child,
-                                  );
-                                },
-                                child: widget.pipViewWidget,
+                      left: offset.dx,
+                      top: offset.dy,
+                      child: GestureDetector(
+                        onPanStart: _isFloating ? _onPanStart : null,
+                        onPanUpdate: _isFloating ? _onPanUpdate : null,
+                        onPanCancel: _isFloating ? _onPanCancel : null,
+                        onPanEnd: _isFloating ? _onPanEnd : null,
+                        onTap: widget.onTapTopWidget,
+                        child: SizedBox(
+                          width: floatingSize.width,
+                          height: floatingSize.height,
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Positioned.fill(
+                                child: AnimatedBuilder(
+                                  animation: _rotationAnimation,
+                                  builder: (context, child) {
+                                    return Transform.rotate(
+                                      angle: _rotationAnimation.value,
+                                      child: child,
+                                    );
+                                  },
+                                  child: widget.pipViewWidget,
+                                ),
                               ),
-                            ),
 
-                            // ✅ Close button stays fixed (doesn't rotate, but moves with PIP)
-                            if (widget.closeButton != null && _isFloating)
-                              Positioned(
-                                right: 0,
-                                top: 0,
-                                child: widget.closeButton!,
-                              ),
-                          ],
+                              if (widget.closeButton != null && _isFloating)
+                                Align(
+                                  alignment: Alignment.topRight,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(6.0),
+                                    child: widget.closeButton!,
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ),
-                  );
+                      ));
                 },
                 child: widget.topWidget,
               ),

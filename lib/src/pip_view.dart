@@ -1,6 +1,5 @@
 // ============================================================================
 import 'package:flutter/material.dart';
-import 'dismiss_keyboard.dart';
 import 'helpers/pip_controllers.dart';
 import 'helpers/pip_navigation_services.dart';
 import 'raw_pip_view.dart';
@@ -91,7 +90,7 @@ class PIPViewState extends State<PIPView>
       child: RawPIPView(
         avoidKeyboard: widget.avoidKeyboard,
         pipViewWidget: widget.pipViewWidget,
-        closeButton: widget.closeButton, // ✅ Pass to RawPIPView
+        closeButton: widget.closeButton, 
         bottomWidget: isFloating
             ? Navigator(
                 key: _navigationService.navigatorKey,
