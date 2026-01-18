@@ -206,46 +206,54 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
                               : toggleValue,
                         );
 
+                  // Inside RawPIPView build method...
                   return Positioned(
-                      left: offset.dx,
-                      top: offset.dy,
-                      child: GestureDetector(
-                        onPanStart: _isFloating ? _onPanStart : null,
-                        onPanUpdate: _isFloating ? _onPanUpdate : null,
-                        onPanCancel: _isFloating ? _onPanCancel : null,
-                        onPanEnd: _isFloating ? _onPanEnd : null,
-                        onTap: widget.onTapTopWidget,
-                        child: SizedBox(
-                          width: floatingSize.width,
-                          height: floatingSize.height,
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              Positioned.fill(
-                                child: AnimatedBuilder(
-                                  animation: _rotationAnimation,
-                                  builder: (context, child) {
-                                    return Transform.rotate(
-                                      angle: _rotationAnimation.value,
-                                      child: child,
-                                    );
-                                  },
-                                  child: widget.pipViewWidget,
-                                ),
+                    left: offset.dx,
+                    top: offset.dy,
+                    child: GestureDetector(
+                      onPanStart: _isFloating ? _onPanStart : null,
+                      // ... other pan handlers
+                      child: SizedBox(
+                        width: floatingSize.width,
+                        height: floatingSize.height,
+                        child: Stack(
+                          clipBehavior: Clip
+                              .none, // Allows button to sit slightly outside if needed
+                          children: [
+                            // 1. THE ROTATING CONTENT
+                            Positioned.fill(
+                              child: AnimatedBuilder(
+                                animation: _rotationAnimation,
+                                builder: (context, child) {
+                                  return Transform.rotate(
+                                    angle: _rotationAnimation.value,
+                                    child: child,
+                                  );
+                                },
+                                child: widget.pipViewWidget,
+                              ),
+                            ),
+
+                            // 2. THE STICKY BUTTON (NON-ROTATING)
+                            // This stays "upright" because it's outside Transform.rotate
+                            if (_isFloating)
+                              Positioned(
+                                right: -10, // Adjust position as needed
+                                top: -10,
+                                child: widget.closeButton ?? Container(),
                               ),
 
-                              if (widget.closeButton != null && _isFloating)
-                                Align(
-                                  alignment: Alignment.topRight,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(6.0),
-                                    child: widget.closeButton!,
-                                  ),
-                                ),
-                            ],
-                          ),
+                            // Add your custom control button here too
+                            if (_isFloating && widget.closeButton != null)
+                              Align(
+                                alignment: Alignment.bottomCenter,
+                                child: widget.closeButton,
+                              ),
+                          ],
                         ),
-                      ));
+                      ),
+                    ),
+                  );
                 },
                 child: widget.topWidget,
               ),
