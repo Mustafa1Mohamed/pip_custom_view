@@ -17,7 +17,8 @@ class PIPView extends StatefulWidget {
   final Route<dynamic> Function(RouteSettings) routes;
   final Widget? stickyButton; // NEW: Changed from closeButton to stickyButton
   final Alignment stickyButtonAlignment; // NEW: Button alignment
-
+  final bool freePositioning; // NEW: Enable free positioning
+  final double edgePadding; // NEW: Edge padding
   const PIPView({
     Key? key,
     required this.builder,
@@ -30,6 +31,8 @@ class PIPView extends StatefulWidget {
     required this.routes,
     this.stickyButton, // NEW
     this.stickyButtonAlignment = Alignment.topRight, // NEW
+    this.freePositioning = false, // NEW
+    this.edgePadding = 16.0, // NEW
   }) : super(key: key);
 
   @override
@@ -93,6 +96,8 @@ class PIPViewState extends State<PIPView>
         stickyButton: widget.stickyButton, // NEW: Pass sticky button
         stickyButtonAlignment:
             widget.stickyButtonAlignment, // NEW: Pass alignment
+            freePositioning: widget.freePositioning, // NEW
+        edgePadding: widget.edgePadding, // NEW
         bottomWidget: isFloating
             ? Navigator(
                 key: _navigationService.navigatorKey,

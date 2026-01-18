@@ -12,6 +12,8 @@ class RawPIPView extends StatefulWidget {
   final Widget pipViewWidget;
   final Widget? stickyButton; // NEW: Sticky button parameter
   final Alignment stickyButtonAlignment; // NEW: Button alignment on PIP view
+  final bool freePositioning; // NEW: Enable free positioning anywhere on screen
+  final double edgePadding;
   final void Function()? onTapTopWidget;
 
   const RawPIPView({
@@ -26,6 +28,8 @@ class RawPIPView extends StatefulWidget {
     required this.pipViewWidget,
     this.stickyButton, // NEW
     this.stickyButtonAlignment = Alignment.topRight, // NEW: Default position
+    this.freePositioning = true, // NEW: Default to free positioning
+    this.edgePadding = 16.0,
   }) : super(key: key);
 
   @override
@@ -39,12 +43,16 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
   late final AnimationController _toggleFloatingAnimationController;
   late final AnimationController _dragAnimationController;
   late PIPViewCorner _corner;
+  Offset _currentPosition = Offset.zero;
   Offset _dragOffset = Offset.zero;
   var _isDragging = false;
   var _isFloating = false;
   Widget? _bottomWidgetGhost;
   Map<PIPViewCorner, Offset> _offsets = {};
 
+  Size _screenSize = Size.zero;
+  Size _widgetSize = Size.zero;
+  EdgeInsets _windowPadding = EdgeInsets.zero;
   @override
   void initState() {
     super.initState();
@@ -76,6 +84,9 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
     } else {
       if (widget.topWidget != null && widget.bottomWidget != null) {
         _isFloating = true;
+        if (_offsets.isNotEmpty) {
+          _currentPosition = _offsets[_corner] ?? Offset.zero;
+        }
         _toggleFloatingAnimationController.forward();
       }
     }
@@ -113,6 +124,9 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
       widgetSize: widgetSize,
       windowPadding: windowPadding,
     );
+    if (_currentPosition == Offset.zero && _offsets.isNotEmpty) {
+      _currentPosition = _offsets[_corner] ?? Offset.zero;
+    }
   }
 
   bool _isAnimating() {
@@ -120,13 +134,40 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
         _dragAnimationController.isAnimating;
   }
 
+
+  // NEW: Clamp position to screen boundaries
+  Offset _clampToScreenBounds(Offset position) {
+    final minX = widget.edgePadding + _windowPadding.left;
+    final minY = widget.edgePadding + _windowPadding.top;
+    final maxX = _screenSize.width -
+        _widgetSize.width -
+        widget.edgePadding -
+        _windowPadding.right;
+    final maxY = _screenSize.height -
+        _widgetSize.height -
+        widget.edgePadding -
+        _windowPadding.bottom;
+
+    return Offset(
+      position.dx.clamp(minX, maxX),
+      position.dy.clamp(minY, maxY),
+    );
+  }
   void _onPanUpdate(DragUpdateDetails details) {
     if (!_isDragging) return;
     setState(() {
-      _dragOffset = _dragOffset.translate(
-        details.delta.dx,
-        details.delta.dy,
-      );
+      if (widget.freePositioning) {
+        // NEW: Free positioning - update current position directly
+        _currentPosition = _clampToScreenBounds(
+          _currentPosition.translate(details.delta.dx, details.delta.dy),
+        );
+      } else {
+        // Original corner-snapping behavior
+        _dragOffset = _dragOffset.translate(
+          details.delta.dx,
+          details.delta.dy,
+        );
+      }
     });
   }
 
@@ -134,7 +175,9 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
     if (!_isDragging) return;
     setState(() {
       _dragAnimationController.value = 0;
-      _dragOffset = Offset.zero;
+      if (!widget.freePositioning) {
+        _dragOffset = Offset.zero;
+      }
       _isDragging = false;
     });
   }
@@ -142,24 +185,34 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
   void _onPanEnd(DragEndDetails details) {
     if (!_isDragging) return;
 
-    final nearestCorner = _calculateNearestCorner(
-      offset: _dragOffset,
-      offsets: _offsets,
-    );
-    setState(() {
-      _corner = nearestCorner;
-      _isDragging = false;
-    });
-    _dragAnimationController.forward().whenCompleteOrCancel(() {
-      _dragAnimationController.value = 0;
-      _dragOffset = Offset.zero;
-    });
+    if (widget.freePositioning) {
+      // NEW: Free positioning - just stop dragging, position is already set
+      setState(() {
+        _isDragging = false;
+      });
+    } else {
+      // Original corner-snapping behavior
+      final nearestCorner = _calculateNearestCorner(
+        offset: _dragOffset,
+        offsets: _offsets,
+      );
+      setState(() {
+        _corner = nearestCorner;
+        _isDragging = false;
+      });
+      _dragAnimationController.forward().whenCompleteOrCancel(() {
+        _dragAnimationController.value = 0;
+        _dragOffset = Offset.zero;
+      });
+    }
   }
 
   void _onPanStart(DragStartDetails details) {
     if (_isAnimating()) return;
     setState(() {
-      _dragOffset = _offsets[_corner]!;
+      if (!widget.freePositioning) {
+        _dragOffset = _offsets[_corner]!;
+      }
       _isDragging = true;
     });
   }
@@ -225,14 +278,41 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
                     _toggleFloatingAnimationController.value,
                   );
 
-                  final floatingOffset = _isDragging
-                      ? _dragOffset
-                      : Tween<Offset>(
-                          begin: _dragOffset,
-                          end: calculatedOffset,
-                        ).transform(_dragAnimationController.isAnimating
-                          ? dragAnimationValue
-                          : toggleFloatingAnimationValue);
+                   // NEW: Calculate floating offset based on positioning mode
+                  Offset floatingOffset;
+
+                  if (widget.freePositioning) {
+                    // Free positioning mode
+                    if (_isFloating) {
+                      floatingOffset = _currentPosition;
+                    } else {
+                      // Transitioning to floating - animate from full screen to initial position
+                      floatingOffset = Tween<Offset>(
+                        begin: Offset.zero,
+                        end: _currentPosition,
+                      ).transform(toggleFloatingAnimationValue);
+                    }
+                  } else {
+                    // Original corner-snapping mode
+                    floatingOffset = _isDragging
+                        ? _dragOffset
+                        : Tween<Offset>(
+                            begin: _dragOffset,
+                            end: calculatedOffset,
+                          ).transform(_dragAnimationController.isAnimating
+                            ? dragAnimationValue
+                            : toggleFloatingAnimationValue);
+                  }
+
+
+                  // final floatingOffset = _isDragging
+                  //     ? _dragOffset
+                  //     : Tween<Offset>(
+                  //         begin: _dragOffset,
+                  //         end: calculatedOffset,
+                  //       ).transform(_dragAnimationController.isAnimating
+                  //         ? dragAnimationValue
+                  //         : toggleFloatingAnimationValue);
                   final borderRadius = Tween<double>(
                     begin: 0,
                     end: 10,
