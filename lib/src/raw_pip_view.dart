@@ -17,7 +17,10 @@ class RawPIPView extends StatefulWidget {
   final void Function()? onTapTopWidget;
   final Widget?
       frameWidget; // NEW: Frame widget that wraps the rotating content
-
+      final double? stickyButtonTop;
+  final double? stickyButtonBottom;
+  final double? stickyButtonLeft;
+  final double? stickyButtonRight;
   const RawPIPView({
     Key? key,
     this.initialCorner = PIPViewCorner.rightTop,
@@ -33,6 +36,10 @@ class RawPIPView extends StatefulWidget {
     this.freePositioning = true,
     this.edgePadding = 16.0,
     this.frameWidget, // NEW
+    this.stickyButtonTop,
+    this.stickyButtonBottom,
+    this.stickyButtonLeft,
+    this.stickyButtonRight
   }) : super(key: key);
 
   @override
@@ -397,10 +404,24 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
 
                             // Layer 3: The sticky button (top layer, doesn't rotate)
                             if (_isFloating && widget.stickyButton != null)
-                              Align(
-                                alignment: widget.stickyButtonAlignment,
-                                child: widget.stickyButton!,
-                              ),
+                              // Check if any specific position is provided
+                              if (widget.stickyButtonTop != null ||
+                                  widget.stickyButtonBottom != null ||
+                                  widget.stickyButtonLeft != null ||
+                                  widget.stickyButtonRight != null)
+                                Positioned(
+                                  top: widget.stickyButtonTop,
+                                  bottom: widget.stickyButtonBottom,
+                                  left: widget.stickyButtonLeft,
+                                  right: widget.stickyButtonRight,
+                                  child: widget.stickyButton!,
+                                )
+                              else
+                                // Fallback to standard alignment if no position provided
+                                Align(
+                                  alignment: widget.stickyButtonAlignment,
+                                  child: widget.stickyButton!,
+                                ),
                           ],
                         ),
                       ),

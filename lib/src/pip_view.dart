@@ -20,7 +20,10 @@ class PIPView extends StatefulWidget {
   final bool freePositioning;
   final double edgePadding;
   final Widget? frameWidget; // NEW: Frame widget parameter
-
+  final double? stickyButtonTop;
+  final double? stickyButtonBottom;
+  final double? stickyButtonLeft;
+  final double? stickyButtonRight;
   const PIPView({
     Key? key,
     required this.builder,
@@ -36,6 +39,10 @@ class PIPView extends StatefulWidget {
     this.freePositioning = true,
     this.edgePadding = 16.0,
     this.frameWidget, // NEW
+    this.stickyButtonTop,
+    this.stickyButtonBottom,
+    this.stickyButtonLeft,
+    this.stickyButtonRight
   }) : super(key: key);
 
   @override
@@ -125,6 +132,10 @@ class PIPViewState extends State<PIPView>
         floatingHeight: widget.floatingHeight,
         floatingWidth: widget.floatingWidth,
         initialCorner: widget.initialCorner,
+        stickyButtonTop: widget.stickyButtonTop,
+        stickyButtonBottom: widget.stickyButtonBottom,
+        stickyButtonLeft: widget.stickyButtonLeft,
+        stickyButtonRight: widget.stickyButtonRight,
       ),
     );
   }
