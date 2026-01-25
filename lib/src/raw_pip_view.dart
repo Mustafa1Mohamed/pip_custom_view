@@ -337,6 +337,7 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
                         width: currentWidth,
                         height: currentHeight,
                         child: Stack(
+                          clipBehavior: Clip.none,
                           children: [
                             // Layer 1: The rotating PIP view content (bottom layer)
                             Positioned.fill(
@@ -382,7 +383,11 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
                                 child: IgnorePointer(
                                   // Allow touches to pass through to the content below
                                   ignoring: true,
-                                  child: widget.frameWidget!,
+                                  child: OverflowBox(
+                                    maxWidth: double.infinity,
+                                      maxHeight: double.infinity,
+                                      alignment: Alignment.center,
+                                    child: widget.frameWidget!),
                                 ),
                               ),
 
