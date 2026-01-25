@@ -379,7 +379,11 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
 
                             // Layer 2: The frame widget (above rotating content, doesn't rotate)
                             if (_isFloating && widget.frameWidget != null)
-                              Positioned.fill(
+                              Positioned(
+                                left: 0,
+                                top: 0,
+                                right: 0,
+                                bottom: 0,
                                 child: IgnorePointer(
                                   // Allow touches to pass through to the content below
                                   ignoring: true,
