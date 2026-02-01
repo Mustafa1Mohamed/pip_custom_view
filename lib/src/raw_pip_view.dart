@@ -335,6 +335,7 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
                     left: floatingOffset.dx,
                     top: floatingOffset.dy,
                     child: GestureDetector(
+                      behavior: HitTestBehavior.deferToChild,
                       onPanStart: _isFloating ? _onPanStart : null,
                       onPanUpdate: _isFloating ? _onPanUpdate : null,
                       onPanCancel: _isFloating ? _onPanCancel : null,
