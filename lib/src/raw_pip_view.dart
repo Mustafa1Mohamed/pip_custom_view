@@ -17,30 +17,30 @@ class RawPIPView extends StatefulWidget {
   final void Function()? onTapTopWidget;
   final Widget?
       frameWidget; // NEW: Frame widget that wraps the rotating content
-      final double? stickyButtonTop;
+  final double? stickyButtonTop;
   final double? stickyButtonBottom;
   final double? stickyButtonLeft;
   final double? stickyButtonRight;
-  const RawPIPView({
-    Key? key,
-    this.initialCorner = PIPViewCorner.rightTop,
-    this.floatingWidth,
-    this.floatingHeight,
-    this.avoidKeyboard = true,
-    this.topWidget,
-    this.bottomWidget,
-    this.onTapTopWidget,
-    required this.pipViewWidget,
-    this.stickyButton,
-    this.stickyButtonAlignment = Alignment.topRight,
-    this.freePositioning = true,
-    this.edgePadding = 16.0,
-    this.frameWidget, // NEW
-    this.stickyButtonTop,
-    this.stickyButtonBottom,
-    this.stickyButtonLeft,
-    this.stickyButtonRight
-  }) : super(key: key);
+  const RawPIPView(
+      {Key? key,
+      this.initialCorner = PIPViewCorner.rightTop,
+      this.floatingWidth,
+      this.floatingHeight,
+      this.avoidKeyboard = true,
+      this.topWidget,
+      this.bottomWidget,
+      this.onTapTopWidget,
+      required this.pipViewWidget,
+      this.stickyButton,
+      this.stickyButtonAlignment = Alignment.topRight,
+      this.freePositioning = true,
+      this.edgePadding = 16.0,
+      this.frameWidget, // NEW
+      this.stickyButtonTop,
+      this.stickyButtonBottom,
+      this.stickyButtonLeft,
+      this.stickyButtonRight})
+      : super(key: key);
 
   @override
   RawPIPViewState createState() => RawPIPViewState();
@@ -340,89 +340,97 @@ class RawPIPViewState extends State<RawPIPView> with TickerProviderStateMixin {
                       onPanCancel: _isFloating ? _onPanCancel : null,
                       onPanEnd: _isFloating ? _onPanEnd : null,
                       onTap: widget.onTapTopWidget,
-                      child: SizedBox(
-                        width: currentWidth,
-                        height: currentHeight,
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            // Layer 1: The rotating PIP view content (bottom layer)
-                            Positioned.fill(
-                              child: Material(
-                                borderRadius:
-                                    BorderRadius.circular(borderRadius),
-                                color: Colors.transparent,
-                                child: _isFloating
-                                    ? AnimatedBuilder(
-                                        animation: _rotationAnimation,
-                                        builder: (context, child) {
-                                          return Transform.rotate(
-                                            angle: _rotationAnimation.value,
-                                            child: child,
-                                          );
-                                        },
-                                        child: widget.pipViewWidget,
-                                      )
-                                    : Container(
-                                        clipBehavior: Clip.antiAlias,
-                                        decoration: BoxDecoration(
-                                          color: Colors.transparent,
-                                          borderRadius: BorderRadius.circular(
-                                              borderRadius),
-                                        ),
-                                        width: currentWidth,
-                                        height: currentHeight,
-                                        child: Transform.scale(
-                                          scale: scale,
-                                          child: OverflowBox(
-                                            maxHeight: fullWidgetSize.height,
-                                            maxWidth: fullWidgetSize.width,
-                                            child: child,
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          right: widget.stickyButtonRight != null ? 32 : 0,
+                          left: widget.stickyButtonLeft != null ? 32 : 0,
+                          top: widget.stickyButtonTop != null ? 32 : 0,
+                          bottom: widget.stickyButtonBottom != null ? 32 : 0,
+                        ),
+                        child: SizedBox(
+                          width: currentWidth,
+                          height: currentHeight,
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              // Layer 1: The rotating PIP view content (bottom layer)
+                              Positioned.fill(
+                                child: Material(
+                                  borderRadius:
+                                      BorderRadius.circular(borderRadius),
+                                  color: Colors.transparent,
+                                  child: _isFloating
+                                      ? AnimatedBuilder(
+                                          animation: _rotationAnimation,
+                                          builder: (context, child) {
+                                            return Transform.rotate(
+                                              angle: _rotationAnimation.value,
+                                              child: child,
+                                            );
+                                          },
+                                          child: widget.pipViewWidget,
+                                        )
+                                      : Container(
+                                          clipBehavior: Clip.antiAlias,
+                                          decoration: BoxDecoration(
+                                            color: Colors.transparent,
+                                            borderRadius: BorderRadius.circular(
+                                                borderRadius),
+                                          ),
+                                          width: currentWidth,
+                                          height: currentHeight,
+                                          child: Transform.scale(
+                                            scale: scale,
+                                            child: OverflowBox(
+                                              maxHeight: fullWidgetSize.height,
+                                              maxWidth: fullWidgetSize.width,
+                                              child: child,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                              ),
-                            ),
-
-                            // Layer 2: The frame widget (above rotating content, doesn't rotate)
-                            if (_isFloating && widget.frameWidget != null)
-                              Positioned(
-                                left: 0,
-                                top: 0,
-                                right: 0,
-                                bottom: 0,
-                                child: IgnorePointer(
-                                  // Allow touches to pass through to the content below
-                                  ignoring: true,
-                                  child: OverflowBox(
-                                    maxWidth: double.infinity,
-                                      maxHeight: double.infinity,
-                                      alignment: Alignment.center,
-                                    child: widget.frameWidget!),
                                 ),
                               ),
 
-                            // Layer 3: The sticky button (top layer, doesn't rotate)
-                            if (_isFloating && widget.stickyButton != null)
-                              // Check if any specific position is provided
-                              if (widget.stickyButtonTop != null ||
-                                  widget.stickyButtonBottom != null ||
-                                  widget.stickyButtonLeft != null ||
-                                  widget.stickyButtonRight != null)
+                              // Layer 2: The frame widget (above rotating content, doesn't rotate)
+                              if (_isFloating && widget.frameWidget != null)
                                 Positioned(
-                                  top: widget.stickyButtonTop,
-                                  bottom: widget.stickyButtonBottom,
-                                  left: widget.stickyButtonLeft,
-                                  right: widget.stickyButtonRight,
-                                  child: widget.stickyButton!,
-                                )
-                              else
-                                // Fallback to standard alignment if no position provided
-                                Align(
-                                  alignment: widget.stickyButtonAlignment,
-                                  child: widget.stickyButton!,
+                                  left: 0,
+                                  top: 0,
+                                  right: 0,
+                                  bottom: 0,
+                                  child: IgnorePointer(
+                                    // Allow touches to pass through to the content below
+                                    ignoring: true,
+                                    child: OverflowBox(
+                                        maxWidth: double.infinity,
+                                        maxHeight: double.infinity,
+                                        alignment: Alignment.center,
+                                        child: widget.frameWidget!),
+                                  ),
                                 ),
-                          ],
+
+                              // Layer 3: The sticky button (top layer, doesn't rotate)
+                              if (_isFloating && widget.stickyButton != null)
+                                // Check if any specific position is provided
+                                if (widget.stickyButtonTop != null ||
+                                    widget.stickyButtonBottom != null ||
+                                    widget.stickyButtonLeft != null ||
+                                    widget.stickyButtonRight != null)
+                                  Positioned(
+                                    top: widget.stickyButtonTop,
+                                    bottom: widget.stickyButtonBottom,
+                                    left: widget.stickyButtonLeft,
+                                    right: widget.stickyButtonRight,
+                                    child: widget.stickyButton!,
+                                  )
+                                else
+                                  // Fallback to standard alignment if no position provided
+                                  Align(
+                                    alignment: widget.stickyButtonAlignment,
+                                    child: widget.stickyButton!,
+                                  ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
